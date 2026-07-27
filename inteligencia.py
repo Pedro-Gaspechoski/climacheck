@@ -60,4 +60,4 @@ def verificar_link(chave, link):
     veracidade_link = texto_resposta[0]
     explicacao_link = "\n".join(texto_resposta[1:])
 
-    return veracidade_link, explicacao_lin
+    return veracidade_link, explicacao_link
