@@ -2,7 +2,7 @@ import streamlit as st
 import inteligencia
 
 st.set_page_config(layout="wide")
-chave = st.secrets["GEMINI_CHAVE"]
+chave = st.secrets["GROQ_CHAVE"]
 
 st.image('logotipo_climacheck.png', width=150)
 
@@ -60,5 +60,3 @@ st.write("")
 st.write("")
 st.write("")
 st.markdown("<p style='text-align: center; font-size: 12px;'>Projeto desenvolvido por Pedro Gaspechoski</p>", unsafe_allow_html=True)
-
-

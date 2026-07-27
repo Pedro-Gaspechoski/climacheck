@@ -1,41 +1,38 @@
-import time
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+from groq import Groq
+from groq import RateLimitError
 
 
-def _gerar_com_retry(modelo, prompt, tentativas=3, espera_inicial=5):
-    """Chama o Gemini com retry em caso de estouro de cota (ResourceExhausted)."""
-    for i in range(tentativas):
-        try:
-            return modelo.generate_content(prompt)
-        except ResourceExhausted:
-            if i == tentativas - 1:
-                raise
-            time.sleep(espera_inicial * (i + 1))  # espera crescente: 5s, 10s, 15s...
-    return None
+def _perguntar_groq(chave, prompt):
+    """Envia o prompt para a Groq e retorna o texto da resposta."""
+    cliente = Groq(api_key=chave)
+
+    resposta = cliente.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
+    )
+
+    return resposta.choices[0].message.content
 
 
 def teste(chave, info):
-    genai.configure(api_key=chave)
-    modelo = genai.GenerativeModel('gemini-2.0-flash')
-
     prompt = (
         f"Verifique se a seguinte informação sobre mudanças climáticas está correta: {info}. "
         f"Responda com 'Correto' ou 'Errado', seguido de uma explicação."
     )
 
     try:
-        resposta = _gerar_com_retry(modelo, prompt)
-    except ResourceExhausted:
+        texto = _perguntar_groq(chave, prompt)
+    except RateLimitError:
         return (
             "Erro",
-            "O limite de requisições da API do Gemini foi atingido. "
-            "Aguarde alguns instantes e tente novamente, ou verifique sua cota no Google AI Studio."
+            "O limite de requisições da API foi atingido. Aguarde um pouco e tente novamente."
         )
     except Exception as e:
         return "Erro", f"Ocorreu um erro ao consultar a IA: {e}"
 
-    texto_resposta = resposta.text.strip().split("\n")
+    texto_resposta = texto.strip().split("\n")
     veracidade = texto_resposta[0]
     explicacao = "\n".join(texto_resposta[1:])
 
@@ -43,9 +40,6 @@ def teste(chave, info):
 
 
 def verificar_link(chave, link):
-    genai.configure(api_key=chave)
-    modelo = genai.GenerativeModel('gemini-2.0-flash')
-
     prompt = (
         f"Verifique a autenticidade do seguinte link sobre mudanças climáticas: {link}. "
         f"Analise se ele contém informações falsas ou incorretas e forneça uma explicação "
@@ -53,18 +47,17 @@ def verificar_link(chave, link):
     )
 
     try:
-        resposta = _gerar_com_retry(modelo, prompt)
-    except ResourceExhausted:
+        texto = _perguntar_groq(chave, prompt)
+    except RateLimitError:
         return (
             "Erro",
-            "O limite de requisições da API do Gemini foi atingido. "
-            "Aguarde alguns instantes e tente novamente, ou verifique sua cota no Google AI Studio."
+            "O limite de requisições da API foi atingido. Aguarde um pouco e tente novamente."
         )
     except Exception as e:
         return "Erro", f"Ocorreu um erro ao consultar a IA: {e}"
 
-    texto_resposta = resposta.text.strip().split("\n")
+    texto_resposta = texto.strip().split("\n")
     veracidade_link = texto_resposta[0]
     explicacao_link = "\n".join(texto_resposta[1:])
 
-    return veracidade_link, explicacao_link
+    return veracidade_link, explicacao_lin
